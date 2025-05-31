@@ -5,3 +5,4 @@ redis==5.0.1
 croniter==6.0.0
 python-dateutil==2.9.0.post0
 python-multipart
+websockets==15.0.1
