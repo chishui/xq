@@ -4,13 +4,13 @@ import base64
 from datetime import date, datetime, timedelta
 
 class Message:
-    def __init__(self, body: str, timestamp: float, run_every: timedelta = None, run_whenever_at: datetime = None, id:str=None):
+    def __init__(self, body: str, timestamp: float, id:str=None, cron_expression: str = None):
         self.body = body
         # timestamp when it can be processed, now if not set
         self.timestamp = datetime.now().timestamp() if timestamp is None else timestamp
-        self.run_every = run_every
-        self.run_whenever_at = run_whenever_at
+        self.cron_expression = cron_expression
         self.id = id if id else str(uuid.uuid4())
+        
 
     def to_json(self):
         byte_stream = pickle.dumps(self)

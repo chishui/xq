@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from croniter import croniter
 from xq.message import Message
 
 XQ_STORAGE_PREFIX = "xq_prefix_"
@@ -13,24 +14,21 @@ class Queue:
         self.queue_name = XQ_STORAGE_PREFIX + queue_name
         self.next_run_timestamp = None
 
-    def enqueue(self, body, run_at=None, run_every=None, run_whenever_at=None):
+    def enqueue(self, body, cron_expression=None):
         if not isinstance(body, str) and not isinstance(body, bytes):
             raise TypeError("invalid body type, please use str type")
         now_timestamp = datetime.now().timestamp()
         timestamp = 0
-        if run_every:
-            pass
-        elif run_at:
-            timestamp = run_at.timestamp()
-            if timestamp < now_timestamp:
-                logger.error("cannot schedule task happened at past")
-                return
-        elif run_whenever_at:
-            pass
+        
+        if cron_expression:
+            # Use croniter to calculate the next run time
+            cron = croniter(cron_expression, datetime.now())
+            next_run = cron.get_next(datetime)
+            timestamp = next_run.timestamp()
         else: # run immediately and only once
             pass
 
-        msg = Message(body, timestamp, run_every, run_whenever_at)
+        msg = Message(body, timestamp, cron_expression=cron_expression)
         self.redis.zadd(self.queue_name, {msg.to_json(): timestamp})
 
     def poll(self):
@@ -57,16 +55,13 @@ class Queue:
     def _re_enqueue(self, msgs):
         msgs_to_enqueue = []
         for msg in msgs:
-            if msg.run_every:
-                msg.timestamp = datetime.fromtimestamp(msg.timestamp) + msg.run_every
+            if msg.cron_expression:
+                # Use croniter to calculate the next run time
+                cron = croniter(msg.cron_expression, datetime.now())
+                next_run = cron.get_next(datetime)
+                msg.timestamp = next_run.timestamp()
                 msgs_to_enqueue.append(msg)
-            elif msg.run_whenever_at:
-                pass
-            else:
-                pass
         for msg in msgs_to_enqueue:
             self.redis.zadd(self.queue_name, {msg.to_json(): msg.timestamp})
 
-    def _next_timestamp(self, msg):
-        pass
 
