@@ -9,7 +9,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="xqueue",
-    version="0.2.0",
+    version="0.2.1",
     description="A distributed task queue with cron scheduling built on top of Redis",
     long_description=long_description,
     long_description_content_type="text/markdown",
